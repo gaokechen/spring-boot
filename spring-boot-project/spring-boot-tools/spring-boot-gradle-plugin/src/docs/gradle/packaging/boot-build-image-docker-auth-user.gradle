@@ -4,13 +4,13 @@ plugins {
 }
 
 bootJar {
-	mainClassName 'com.example.ExampleApplication'
+	mainClass = 'com.example.ExampleApplication'
 }
 
 // tag::docker-auth-user[]
 bootBuildImage {
 	docker {
-		registry {
+		builderRegistry {
 			username = "user"
 			password = "secret"
 			url = "https://docker.example.com/v1/"

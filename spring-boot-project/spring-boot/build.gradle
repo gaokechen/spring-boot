@@ -44,7 +44,6 @@ dependencies {
 	optional("org.apache.tomcat.embed:tomcat-embed-jasper")
 	optional("org.apache.tomcat:tomcat-jdbc")
 	optional("org.assertj:assertj-core")
-	optional("org.codehaus.btm:btm")
 	optional("org.codehaus.groovy:groovy")
 	optional("org.codehaus.groovy:groovy-xml")
 	optional("org.eclipse.jetty:jetty-servlets")
@@ -100,7 +99,6 @@ dependencies {
 	testImplementation("org.springframework.data:spring-data-r2dbc")
 	testImplementation("org.xerial:sqlite-jdbc")
 
-	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	testRuntimeOnly("org.testcontainers:jdbc") {
 		exclude group: "javax.annotation", module: "javax.annotation-api"
 		exclude group: "javax.xml.bind", module: "jaxb-api"

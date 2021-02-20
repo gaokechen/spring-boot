@@ -7,13 +7,13 @@ plugins {
 }
 
 tasks.getByName<BootJar>("bootJar") {
-	mainClassName = "com.example.ExampleApplication"
+	mainClass.set("com.example.ExampleApplication")
 }
 
 // tag::docker-auth-user[]
 tasks.getByName<BootBuildImage>("bootBuildImage") {
 	docker {
-		registry {
+		builderRegistry {
 			username = "user"
 			password = "secret"
 			url = "https://docker.example.com/v1/"

@@ -51,7 +51,6 @@ public @interface EnableConfigurationProperties {
 	 * {@link ConfigurationProperties @ConfigurationProperties} annotated beans with
 	 * Spring. Standard Spring Beans will also be scanned regardless of this value.
 	 * @return {@code @ConfigurationProperties} annotated beans to register
-	 * @see ImportAsConfigurationPropertiesBean
 	 */
 	Class<?>[] value() default {};
 

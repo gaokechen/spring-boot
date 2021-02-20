@@ -7,13 +7,13 @@ plugins {
 }
 
 tasks.getByName<BootJar>("bootJar") {
-	mainClassName = "com.example.ExampleApplication"
+	mainClass.set("com.example.ExampleApplication")
 }
 
 // tag::docker-auth-token[]
 tasks.getByName<BootBuildImage>("bootBuildImage") {
 	docker {
-		registry {
+		builderRegistry {
 			token = "9cbaf023786cd7..."
 		}
 	}

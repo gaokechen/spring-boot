@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -312,7 +312,6 @@ public class SpringApplication {
 		stopWatch.start();
 		DefaultBootstrapContext bootstrapContext = createBootstrapContext();
 		ConfigurableApplicationContext context = null;
-		Collection<SpringBootExceptionReporter> exceptionReporters = new ArrayList<>();
 		configureHeadlessProperty();
 		SpringApplicationRunListeners listeners = getRunListeners(args);
 		listeners.starting(bootstrapContext, this.mainApplicationClass);
@@ -323,8 +322,6 @@ public class SpringApplication {
 			Banner printedBanner = printBanner(environment);
 			context = createApplicationContext();
 			context.setApplicationStartup(this.applicationStartup);
-			exceptionReporters = getSpringFactoriesInstances(SpringBootExceptionReporter.class,
-					new Class<?>[] { ConfigurableApplicationContext.class }, context);
 			prepareContext(bootstrapContext, context, environment, listeners, applicationArguments, printedBanner);
 			refreshContext(context);
 			afterRefresh(context, applicationArguments);
@@ -336,7 +333,7 @@ public class SpringApplication {
 			callRunners(context, applicationArguments);
 		}
 		catch (Throwable ex) {
-			handleRunFailure(context, ex, exceptionReporters, listeners);
+			handleRunFailure(context, ex, listeners);
 			throw new IllegalStateException(ex);
 		}
 
@@ -344,7 +341,7 @@ public class SpringApplication {
 			listeners.running(context);
 		}
 		catch (Throwable ex) {
-			handleRunFailure(context, ex, exceptionReporters, null);
+			handleRunFailure(context, ex, null);
 			throw new IllegalStateException(ex);
 		}
 		return context;
@@ -418,7 +415,6 @@ public class SpringApplication {
 	}
 
 	private void refreshContext(ConfigurableApplicationContext context) {
-		refresh((ApplicationContext) context);
 		if (this.registerShutdownHook) {
 			try {
 				context.registerShutdownHook();
@@ -427,6 +423,7 @@ public class SpringApplication {
 				// Not allowed in some environments.
 			}
 		}
+		refresh(context);
 	}
 
 	private void configureHeadlessProperty() {
@@ -753,18 +750,6 @@ public class SpringApplication {
 	/**
 	 * Refresh the underlying {@link ApplicationContext}.
 	 * @param applicationContext the application context to refresh
-	 * @deprecated since 2.3.0 in favor of
-	 * {@link #refresh(ConfigurableApplicationContext)}
-	 */
-	@Deprecated
-	protected void refresh(ApplicationContext applicationContext) {
-		Assert.isInstanceOf(ConfigurableApplicationContext.class, applicationContext);
-		refresh((ConfigurableApplicationContext) applicationContext);
-	}
-
-	/**
-	 * Refresh the underlying {@link ApplicationContext}.
-	 * @param applicationContext the application context to refresh
 	 */
 	protected void refresh(ConfigurableApplicationContext applicationContext) {
 		applicationContext.refresh();
@@ -812,7 +797,7 @@ public class SpringApplication {
 	}
 
 	private void handleRunFailure(ConfigurableApplicationContext context, Throwable exception,
-			Collection<SpringBootExceptionReporter> exceptionReporters, SpringApplicationRunListeners listeners) {
+			SpringApplicationRunListeners listeners) {
 		try {
 			try {
 				handleExitCode(context, exception);
@@ -821,7 +806,7 @@ public class SpringApplication {
 				}
 			}
 			finally {
-				reportFailure(exceptionReporters, exception);
+				reportFailure(getExceptionReporters(context), exception);
 				if (context != null) {
 					context.close();
 				}
@@ -831,6 +816,16 @@ public class SpringApplication {
 			logger.warn("Unable to close ApplicationContext", ex);
 		}
 		ReflectionUtils.rethrowRuntimeException(exception);
+	}
+
+	private Collection<SpringBootExceptionReporter> getExceptionReporters(ConfigurableApplicationContext context) {
+		try {
+			return getSpringFactoriesInstances(SpringBootExceptionReporter.class,
+					new Class<?>[] { ConfigurableApplicationContext.class }, context);
+		}
+		catch (Throwable ex) {
+			return Collections.emptyList();
+		}
 	}
 
 	private void reportFailure(Collection<SpringBootExceptionReporter> exceptionReporters, Throwable failure) {
@@ -1267,6 +1262,7 @@ public class SpringApplication {
 	/**
 	 * Set the {@link ApplicationStartup} to use for collecting startup metrics.
 	 * @param applicationStartup the application startup to use
+	 * @since 2.4.0
 	 */
 	public void setApplicationStartup(ApplicationStartup applicationStartup) {
 		this.applicationStartup = (applicationStartup != null) ? applicationStartup : ApplicationStartup.DEFAULT;
@@ -1275,6 +1271,7 @@ public class SpringApplication {
 	/**
 	 * Returns the {@link ApplicationStartup} used for collecting startup metrics.
 	 * @return the application startup
+	 * @since 2.4.0
 	 */
 	public ApplicationStartup getApplicationStartup() {
 		return this.applicationStartup;

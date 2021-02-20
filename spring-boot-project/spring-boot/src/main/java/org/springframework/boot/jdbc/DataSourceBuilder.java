@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,9 +167,9 @@ public final class DataSourceBuilder<T extends DataSource> {
 
 	}
 
-	private static class OracleCommonDataSourceSettings extends DataSourceSettings {
+	private static class OracleDataSourceSettings extends DataSourceSettings {
 
-		OracleCommonDataSourceSettings(Class<? extends DataSource> type) {
+		OracleDataSourceSettings(Class<? extends DataSource> type) {
 			super(type, (aliases) -> aliases.addAliases("username", "user"));
 		}
 
@@ -194,8 +194,12 @@ public final class DataSourceBuilder<T extends DataSource> {
 					create(classLoader, "org.springframework.jdbc.datasource.SimpleDriverDataSource",
 							(type) -> new DataSourceSettings(type,
 									(aliases) -> aliases.addAliases("driver-class-name", "driver-class"))));
-			addIfAvailable(this.allDataSourceSettings, create(classLoader,
-					"oracle.jdbc.datasource.OracleCommonDataSource", OracleCommonDataSourceSettings::new));
+			addIfAvailable(this.allDataSourceSettings,
+					create(classLoader, "oracle.jdbc.datasource.OracleDataSource", OracleDataSourceSettings::new));
+			addIfAvailable(this.allDataSourceSettings, create(classLoader, "org.h2.jdbcx.JdbcDataSource",
+					(type) -> new DataSourceSettings(type, (aliases) -> aliases.addAliases("username", "user"))));
+			addIfAvailable(this.allDataSourceSettings, create(classLoader, "org.postgresql.ds.PGSimpleDataSource",
+					(type) -> new DataSourceSettings(type, (aliases) -> aliases.addAliases("username", "user"))));
 		}
 
 		private static List<DataSourceSettings> resolveAvailableDataSourceSettings(ClassLoader classLoader) {

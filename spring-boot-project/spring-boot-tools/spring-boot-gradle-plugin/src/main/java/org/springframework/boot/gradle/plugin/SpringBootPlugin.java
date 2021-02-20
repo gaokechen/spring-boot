@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.springframework.boot.gradle.plugin;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
@@ -115,14 +116,23 @@ public class SpringBootPlugin implements Plugin<Project> {
 
 	private void registerPluginActions(Project project, Configuration bootArchives) {
 		SinglePublishedArtifact singlePublishedArtifact = new SinglePublishedArtifact(bootArchives.getArtifacts());
+		@SuppressWarnings("deprecation")
 		List<PluginApplicationAction> actions = Arrays.asList(new JavaPluginAction(singlePublishedArtifact),
 				new WarPluginAction(singlePublishedArtifact), new MavenPluginAction(bootArchives.getUploadTaskName()),
 				new DependencyManagementPluginAction(), new ApplicationPluginAction(), new KotlinPluginAction());
 		for (PluginApplicationAction action : actions) {
-			Class<? extends Plugin<? extends Project>> pluginClass = action.getPluginClass();
-			if (pluginClass != null) {
-				project.getPlugins().withType(pluginClass, (plugin) -> action.execute(project));
-			}
+			withPluginClassOfAction(action,
+					(pluginClass) -> project.getPlugins().withType(pluginClass, (plugin) -> action.execute(project)));
+		}
+	}
+
+	private void withPluginClassOfAction(PluginApplicationAction action,
+			Consumer<Class<? extends Plugin<? extends Project>>> consumer) {
+		try {
+			consumer.accept(action.getPluginClass());
+		}
+		catch (Throwable ex) {
+			// Plugin class unavailable. Continue.
 		}
 	}
 

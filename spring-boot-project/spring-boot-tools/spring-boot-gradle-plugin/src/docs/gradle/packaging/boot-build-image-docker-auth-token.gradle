@@ -4,13 +4,13 @@ plugins {
 }
 
 bootJar {
-	mainClassName 'com.example.ExampleApplication'
+	mainClass = 'com.example.ExampleApplication'
 }
 
 // tag::docker-auth-token[]
 bootBuildImage {
 	docker {
-		registry {
+		builderRegistry {
 			token = "9cbaf023786cd7..."
 		}
 	}

@@ -4,7 +4,7 @@ plugins {
 }
 
 bootWar {
-	mainClassName = 'com.example.Application'
+	mainClass = 'com.example.Application'
 }
 
 repositories {
@@ -16,4 +16,10 @@ repositories {
 dependencies {
 	implementation(name: "standard")
 	implementation(name: "starter")
+}
+
+bootWar {
+	layered {
+		enabled = false
+	}
 }

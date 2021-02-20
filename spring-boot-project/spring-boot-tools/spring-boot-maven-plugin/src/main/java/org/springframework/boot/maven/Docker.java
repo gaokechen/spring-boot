@@ -33,38 +33,79 @@ public class Docker {
 
 	private String certPath;
 
-	private DockerRegistry registry;
+	private DockerRegistry builderRegistry;
 
+	private DockerRegistry publishRegistry;
+
+	/**
+	 * The host address of the Docker daemon.
+	 * @return the Docker host
+	 */
 	public String getHost() {
 		return this.host;
 	}
 
-	public void setHost(String host) {
+	void setHost(String host) {
 		this.host = host;
 	}
 
+	/**
+	 * Whether the Docker daemon requires TLS communication.
+	 * @return {@code true} to enable TLS
+	 */
 	public boolean isTlsVerify() {
 		return this.tlsVerify;
 	}
 
-	public void setTlsVerify(boolean tlsVerify) {
+	void setTlsVerify(boolean tlsVerify) {
 		this.tlsVerify = tlsVerify;
 	}
 
+	/**
+	 * The path to TLS certificate and key files required for TLS communication with the
+	 * Docker daemon.
+	 * @return the TLS certificate path
+	 */
 	public String getCertPath() {
 		return this.certPath;
 	}
 
-	public void setCertPath(String certPath) {
+	void setCertPath(String certPath) {
 		this.certPath = certPath;
 	}
 
 	/**
-	 * Sets the {@link DockerRegistry} that configures registry authentication.
-	 * @param registry the registry configuration
+	 * Configuration of the Docker registry where builder and run images are stored.
+	 * @return the registry configuration
 	 */
-	public void setRegistry(DockerRegistry registry) {
-		this.registry = registry;
+	DockerRegistry getBuilderRegistry() {
+		return this.builderRegistry;
+	}
+
+	/**
+	 * Sets the {@link DockerRegistry} that configures authentication to the builder
+	 * registry.
+	 * @param builderRegistry the registry configuration
+	 */
+	void setBuilderRegistry(DockerRegistry builderRegistry) {
+		this.builderRegistry = builderRegistry;
+	}
+
+	/**
+	 * Configuration of the Docker registry where the generated image will be published.
+	 * @return the registry configuration
+	 */
+	DockerRegistry getPublishRegistry() {
+		return this.publishRegistry;
+	}
+
+	/**
+	 * Sets the {@link DockerRegistry} that configures authentication to the publishing
+	 * registry.
+	 * @param builderRegistry the registry configuration
+	 */
+	void setPublishRegistry(DockerRegistry builderRegistry) {
+		this.publishRegistry = builderRegistry;
 	}
 
 	/**
@@ -76,7 +117,8 @@ public class Docker {
 	DockerConfiguration asDockerConfiguration() {
 		DockerConfiguration dockerConfiguration = new DockerConfiguration();
 		dockerConfiguration = customizeHost(dockerConfiguration);
-		dockerConfiguration = customizeAuthentication(dockerConfiguration);
+		dockerConfiguration = customizeBuilderAuthentication(dockerConfiguration);
+		dockerConfiguration = customizePublishAuthentication(dockerConfiguration);
 		return dockerConfiguration;
 	}
 
@@ -87,19 +129,34 @@ public class Docker {
 		return dockerConfiguration;
 	}
 
-	private DockerConfiguration customizeAuthentication(DockerConfiguration dockerConfiguration) {
-		if (this.registry == null || this.registry.isEmpty()) {
+	private DockerConfiguration customizeBuilderAuthentication(DockerConfiguration dockerConfiguration) {
+		if (this.builderRegistry == null || this.builderRegistry.isEmpty()) {
 			return dockerConfiguration;
 		}
-		if (this.registry.hasTokenAuth() && !this.registry.hasUserAuth()) {
-			return dockerConfiguration.withRegistryTokenAuthentication(this.registry.getToken());
+		if (this.builderRegistry.hasTokenAuth() && !this.builderRegistry.hasUserAuth()) {
+			return dockerConfiguration.withBuilderRegistryTokenAuthentication(this.builderRegistry.getToken());
 		}
-		if (this.registry.hasUserAuth() && !this.registry.hasTokenAuth()) {
-			return dockerConfiguration.withRegistryUserAuthentication(this.registry.getUsername(),
-					this.registry.getPassword(), this.registry.getUrl(), this.registry.getEmail());
+		if (this.builderRegistry.hasUserAuth() && !this.builderRegistry.hasTokenAuth()) {
+			return dockerConfiguration.withBuilderRegistryUserAuthentication(this.builderRegistry.getUsername(),
+					this.builderRegistry.getPassword(), this.builderRegistry.getUrl(), this.builderRegistry.getEmail());
 		}
 		throw new IllegalArgumentException(
-				"Invalid Docker registry configuration, either token or username/password must be provided");
+				"Invalid Docker builder registry configuration, either token or username/password must be provided");
+	}
+
+	private DockerConfiguration customizePublishAuthentication(DockerConfiguration dockerConfiguration) {
+		if (this.publishRegistry == null || this.publishRegistry.isEmpty()) {
+			return dockerConfiguration;
+		}
+		if (this.publishRegistry.hasTokenAuth() && !this.publishRegistry.hasUserAuth()) {
+			return dockerConfiguration.withPublishRegistryTokenAuthentication(this.publishRegistry.getToken());
+		}
+		if (this.publishRegistry.hasUserAuth() && !this.publishRegistry.hasTokenAuth()) {
+			return dockerConfiguration.withPublishRegistryUserAuthentication(this.publishRegistry.getUsername(),
+					this.publishRegistry.getPassword(), this.publishRegistry.getUrl(), this.publishRegistry.getEmail());
+		}
+		throw new IllegalArgumentException(
+				"Invalid Docker publish registry configuration, either token or username/password must be provided");
 	}
 
 	/**
@@ -117,43 +174,77 @@ public class Docker {
 
 		private String token;
 
-		String getUsername() {
-			return this.username;
+		public DockerRegistry() {
 		}
 
-		public void setUsername(String username) {
+		public DockerRegistry(String username, String password, String url, String email) {
 			this.username = username;
-		}
-
-		String getPassword() {
-			return this.password;
-		}
-
-		public void setPassword(String password) {
 			this.password = password;
-		}
-
-		String getEmail() {
-			return this.email;
-		}
-
-		public void setEmail(String email) {
+			this.url = url;
 			this.email = email;
 		}
 
+		public DockerRegistry(String token) {
+			this.token = token;
+		}
+
+		/**
+		 * The username that will be used for user authentication to the registry.
+		 * @return the username
+		 */
+		public String getUsername() {
+			return this.username;
+		}
+
+		void setUsername(String username) {
+			this.username = username;
+		}
+
+		/**
+		 * The password that will be used for user authentication to the registry.
+		 * @return the password
+		 */
+		public String getPassword() {
+			return this.password;
+		}
+
+		void setPassword(String password) {
+			this.password = password;
+		}
+
+		/**
+		 * The email address that will be used for user authentication to the registry.
+		 * @return the email address
+		 */
+		public String getEmail() {
+			return this.email;
+		}
+
+		void setEmail(String email) {
+			this.email = email;
+		}
+
+		/**
+		 * The URL of the registry.
+		 * @return the registry URL
+		 */
 		String getUrl() {
 			return this.url;
 		}
 
-		public void setUrl(String url) {
+		void setUrl(String url) {
 			this.url = url;
 		}
 
-		String getToken() {
+		/**
+		 * The token that will be used for token authentication to the registry.
+		 * @return the authentication token
+		 */
+		public String getToken() {
 			return this.token;
 		}
 
-		public void setToken(String token) {
+		void setToken(String token) {
 			this.token = token;
 		}
 

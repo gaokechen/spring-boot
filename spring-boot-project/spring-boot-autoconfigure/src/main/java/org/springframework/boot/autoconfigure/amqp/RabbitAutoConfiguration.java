@@ -140,15 +140,19 @@ public class RabbitAutoConfiguration {
 				map.from(ssl::getKeyStoreType).to(factory::setKeyStoreType);
 				map.from(ssl::getKeyStore).to(factory::setKeyStore);
 				map.from(ssl::getKeyStorePassword).to(factory::setKeyStorePassphrase);
+				map.from(ssl::getKeyStoreAlgorithm).whenNonNull().to(factory::setKeyStoreAlgorithm);
 				map.from(ssl::getTrustStoreType).to(factory::setTrustStoreType);
 				map.from(ssl::getTrustStore).to(factory::setTrustStore);
 				map.from(ssl::getTrustStorePassword).to(factory::setTrustStorePassphrase);
+				map.from(ssl::getTrustStoreAlgorithm).whenNonNull().to(factory::setTrustStoreAlgorithm);
 				map.from(ssl::isValidateServerCertificate)
 						.to((validate) -> factory.setSkipServerCertificateValidation(!validate));
 				map.from(ssl::getVerifyHostname).to(factory::setEnableHostnameVerification);
 			}
 			map.from(properties::getConnectionTimeout).whenNonNull().asInt(Duration::toMillis)
 					.to(factory::setConnectionTimeout);
+			map.from(properties::getChannelRpcTimeout).whenNonNull().asInt(Duration::toMillis)
+					.to(factory::setChannelRpcTimeout);
 			map.from(credentialsProvider::getIfUnique).whenNonNull().to(factory::setCredentialsProvider);
 			map.from(credentialsRefreshService::getIfUnique).whenNonNull().to(factory::setCredentialsRefreshService);
 			factory.afterPropertiesSet();

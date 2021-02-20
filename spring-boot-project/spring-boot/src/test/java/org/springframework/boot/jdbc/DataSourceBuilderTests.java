@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,10 @@ import oracle.jdbc.pool.OracleDataSource;
 import oracle.ucp.jdbc.PoolDataSourceImpl;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.h2.Driver;
+import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.postgresql.ds.PGSimpleDataSource;
 
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 
@@ -117,6 +119,24 @@ class DataSourceBuilderTests {
 		PoolDataSourceImpl upcDataSource = (PoolDataSourceImpl) this.dataSource;
 		assertThat(upcDataSource.getConnectionFactoryClassName()).isEqualTo("org.hsqldb.jdbc.JDBCDriver");
 		assertThat(upcDataSource.getUser()).isEqualTo("test");
+	}
+
+	@Test
+	void dataSourceCanBeCreatedWithH2JdbcDataSource() {
+		this.dataSource = DataSourceBuilder.create().url("jdbc:h2:test").type(JdbcDataSource.class).username("test")
+				.build();
+		assertThat(this.dataSource).isInstanceOf(JdbcDataSource.class);
+		JdbcDataSource h2DataSource = (JdbcDataSource) this.dataSource;
+		assertThat(h2DataSource.getUser()).isEqualTo("test");
+	}
+
+	@Test
+	void dataSourceCanBeCreatedWithPGDataSource() {
+		this.dataSource = DataSourceBuilder.create().url("jdbc:postgresql://localhost/test")
+				.type(PGSimpleDataSource.class).username("test").build();
+		assertThat(this.dataSource).isInstanceOf(PGSimpleDataSource.class);
+		PGSimpleDataSource pgDataSource = (PGSimpleDataSource) this.dataSource;
+		assertThat(pgDataSource.getUser()).isEqualTo("test");
 	}
 
 	@Test

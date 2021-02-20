@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.springframework.boot.context.properties;
 
 import java.util.Arrays;
@@ -108,7 +109,7 @@ class ConfigurationPropertiesScanRegistrar implements ImportBeanDefinitionRegist
 
 	private void register(ConfigurationPropertiesBeanRegistrar registrar, Class<?> type) {
 		if (!isComponent(type)) {
-			registrar.register(type, null, false);
+			registrar.register(type);
 		}
 	}
 

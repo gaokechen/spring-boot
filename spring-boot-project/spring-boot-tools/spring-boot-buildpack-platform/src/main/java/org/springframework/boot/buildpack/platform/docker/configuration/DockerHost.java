@@ -30,7 +30,7 @@ public class DockerHost {
 
 	private final String certificatePath;
 
-	protected DockerHost(String address, boolean secure, String certificatePath) {
+	public DockerHost(String address, boolean secure, String certificatePath) {
 		this.address = address;
 		this.secure = secure;
 		this.certificatePath = certificatePath;

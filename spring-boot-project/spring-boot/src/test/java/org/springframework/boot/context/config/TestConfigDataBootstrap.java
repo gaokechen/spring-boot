@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,27 +37,28 @@ import org.springframework.core.env.MapPropertySource;
  */
 class TestConfigDataBootstrap {
 
-	static class LocationResolver implements ConfigDataLocationResolver<Location> {
+	static class LocationResolver implements ConfigDataLocationResolver<Resource> {
 
 		@Override
-		public boolean isResolvable(ConfigDataLocationResolverContext context, String location) {
-			return location.startsWith("testbootstrap:");
+		public boolean isResolvable(ConfigDataLocationResolverContext context, ConfigDataLocation location) {
+			context.getBootstrapContext().get(Binder.class); // gh-24559
+			return location.hasPrefix("testbootstrap:");
 		}
 
 		@Override
-		public List<Location> resolve(ConfigDataLocationResolverContext context, String location, boolean optional) {
+		public List<Resource> resolve(ConfigDataLocationResolverContext context, ConfigDataLocation location) {
 			context.getBootstrapContext().registerIfAbsent(ResolverHelper.class,
 					InstanceSupplier.from(() -> new ResolverHelper(location)));
 			ResolverHelper helper = context.getBootstrapContext().get(ResolverHelper.class);
-			return Collections.singletonList(new Location(helper));
+			return Collections.singletonList(new Resource(helper));
 		}
 
 	}
 
-	static class Loader implements ConfigDataLoader<Location> {
+	static class Loader implements ConfigDataLoader<Resource> {
 
 		@Override
-		public ConfigData load(ConfigDataLoaderContext context, Location location) throws IOException {
+		public ConfigData load(ConfigDataLoaderContext context, Resource location) throws IOException {
 			context.getBootstrapContext().registerIfAbsent(LoaderHelper.class,
 					(bootstrapContext) -> new LoaderHelper(location, () -> bootstrapContext.get(Binder.class)));
 			LoaderHelper helper = context.getBootstrapContext().get(LoaderHelper.class);
@@ -68,11 +69,11 @@ class TestConfigDataBootstrap {
 
 	}
 
-	static class Location extends ConfigDataLocation {
+	static class Resource extends ConfigDataResource {
 
 		private final ResolverHelper resolverHelper;
 
-		Location(ResolverHelper resolverHelper) {
+		Resource(ResolverHelper resolverHelper) {
 			this.resolverHelper = resolverHelper;
 		}
 
@@ -89,13 +90,13 @@ class TestConfigDataBootstrap {
 
 	static class ResolverHelper {
 
-		private final String location;
+		private final ConfigDataLocation location;
 
-		ResolverHelper(String location) {
+		ResolverHelper(ConfigDataLocation location) {
 			this.location = location;
 		}
 
-		String getLocation() {
+		ConfigDataLocation getLocation() {
 			return this.location;
 		}
 
@@ -103,21 +104,25 @@ class TestConfigDataBootstrap {
 
 	static class LoaderHelper implements ApplicationListener<BootstrapContextClosedEvent> {
 
-		private final Location location;
+		private final Resource location;
 
 		private final Supplier<Binder> binder;
 
-		LoaderHelper(Location location, Supplier<Binder> binder) {
+		LoaderHelper(Resource location, Supplier<Binder> binder) {
 			this.location = location;
 			this.binder = binder;
 		}
 
-		Location getLocation() {
+		Resource getLocation() {
 			return this.location;
 		}
 
 		String getBound() {
 			return this.binder.get().bind("myprop", String.class).orElse(null);
+		}
+
+		String getProfileBound() {
+			return this.binder.get().bind("myprofileprop", String.class).orElse(null);
 		}
 
 		@Override
